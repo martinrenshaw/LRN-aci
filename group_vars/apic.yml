@@ -1,0 +1,17 @@
+---
+
+varslist:
+  - { tenant: 'MR-TF13DG', vrf: ['MR-TF13DG-vrf'] }
+  - { tenant: 'NB-KM13DG', vrf: ['NB-KM13DG-vrf'] }
+  - { tenant: 'MH-SC1234', vrf: ['MH-1234-vrf-1', 'MH-1234-vrf-2'], bd: 'MH-SC1234-bd-1' }
+  - tenant: 'JS-WV12DW'
+    vrf: [ 'JS-WV12DW-vrf-1', 'JS-WV12DW-vrf-2' ]
+    bd: 'JS-WV12DW-bd'
+
+  - tenant: 'LC-WV12DW'
+    vrf: [ 'LC-WV12DW-vrf-1', 'LC-WV12DW-vrf-2' ]
+    bd: 'LC-WV12DW-bd'
+
+  - tenant: 'GOLD'
+    vrf: [ 'GOLD-vrf-1', 'GOLD-vrf-2' ]
+    bd: ['GOLD-bd-1','GOLD-bd-2','GOLD-bd-3']

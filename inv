@@ -1,0 +1,7 @@
+[apic:vars]
+username=admin
+password=ciscopsdt
+
+
+[apic]
+sandboxapicdc.cisco.com
