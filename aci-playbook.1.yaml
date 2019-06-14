@@ -1,0 +1,214 @@
+---
+- name: TOP LEVEL PLAY - CREATE ACI STUFF
+  hosts: apic
+  connection: local
+  gather_facts: False
+
+  tasks:
+    - name: ENSURE TENANT EXISTS
+      aci_tenant:
+        host: "{{ inventory_hostname }}"
+        username: "{{ username }}"
+        password: "{{ password }}"
+        state: "present"
+        validate_certs: False
+        tenant: "{{ item.tenant }}"
+        description: "TENANT Created Using Ansible"
+      loop: "{{ varslist }}"
+
+    - name: ENSURE TENANT EXISTS
+      aci_tenant:
+        host: "{{ inventory_hostname }}"
+        username: "{{ username }}"
+        password: "{{ password }}"
+        state: "present"
+        validate_certs: False
+        tenant: "{{ tenant }}"
+        description: "TENANT Created Using Ansible"
+      
+    - name: ENSURE TENANT VRF EXISTS
+      aci_vrf:
+        host: "{{ inventory_hostname }}"
+        username: "{{ username }}"
+        password: "{{ password }}"
+        state: "present"
+        validate_certs: False
+        tenant: "{{ item.0.tenant }}"
+        vrf: "{{ item.1 }}"
+        description: "VRF Created Using Ansible"
+      loop: "{{ varslist|subelements('vrf') }}"
+        
+    - name: ENSURE TENANT BRIDGE DOMAIN EXISTS
+      tags: bde
+      aci_bd:
+        host: "{{ inventory_hostname }}"
+        username: "{{ username }}"
+        password: "{{ password }}"
+        validate_certs: False
+        state: "present"
+        tenant: "{{ item.0.tenant }}"
+        bd: "{{ item.1.bd | default('prod_bd') }}"
+        #vrf: "{{ item.vrf }}"  # I took this out as it was making the play non-idempotant
+        description: "BD Created Using Ansible"
+      loop: "{{ varslist|subelements('vrf') }}"
+
+    - name: ENSURE TENANT SUBNET EXISTS
+      aci_bd_subnet:
+        host: "{{ inventory_hostname }}"
+        username: "{{ username }}"
+        password: "{{ password }}"
+        validate_certs: False
+        state: "present"
+        tenant: "{{ item.0.tenant }}"
+        bd: "{{ item.1.bd | default('prod_bd')}}"
+        gateway: "10.1.100.1"
+        mask: 24
+        scope: "public"
+        description: "Subnet Created Using Ansible"
+      loop: "{{ varslist|subelements('vrf') }}"
+
+    - name: ENSURE TENANT FILTERS EXIST
+      tags: tfe
+      aci_filter:
+        host: "{{ inventory_hostname }}"
+        username: "{{ username }}"
+        password: "{{ password }}"
+        validate_certs: False
+        #action: "post"
+        #protocol: "https"
+        tenant: "{{ tenant }}"
+        filter: "{{ item }}"
+        descr: "Filter Created Using Ansible"
+      with_items:
+        - "https"
+        - "sql"
+
+    - name: ENSURE FILTERS HAVE FILTER ENTRIES
+      tags: ffe
+      aci_filter_entry:
+        host: "{{ inventory_hostname }}"
+        username: "{{ username }}"
+        password: "{{ password }}"
+        state: "present"
+        validate_certs: False
+        tenant: "{{ tenant }}"
+        filter: "{{ item.filter }}"
+        entry: "{{ item.entry }}"
+        ether_type: "ip"
+        ip_protocol: "tcp"
+        dst_port_start: "{{ item.port }}"
+        dst_port_end: "{{ item.port }}"
+      with_items:
+        - filter: "https"
+          entry: "https"
+          port: 443
+        - filter: "sql"
+          entry: "sql"
+          port: 1433
+
+    - name: ENSURE TENANT CONTRACTS EXIST
+      aci_contract:
+        host: "{{ inventory_hostname }}"
+        username: "{{ username }}"
+        password: "{{ password }}"
+        state: "present"
+        validate_certs: False
+        tenant: "{{ tenant }}"
+        contract: "{{ item }}"
+        scope: "context"
+        description: "Contract Created Using Ansible"
+      with_items:
+        - "web"
+        - "sql"
+
+    - name: ENSURE CONTRACTS HAVE CONTRACT SUBJECTS
+      aci_contract_subject:
+        host: "{{ inventory_hostname }}"
+        username: "{{ username }}"
+        password: "{{ password }}"
+        state: "present"
+        validate_certs: False
+        tenant: "{{ tenant }}"
+        contract: "{{ item.contract }}"
+        subject: "{{ item.subject }}"
+      with_items:
+        - contract: "web"
+          subject: "https"
+        - contract: "sql"
+          subject: "sql"
+
+    - name: ENSURE CONTRACTS SUBJECTS ARE ASSOCIATED WITH FILTERS
+      aci_contract_subject_to_filter:
+        host: "{{ inventory_hostname }}"
+        username: "{{ username }}"
+        password: "{{ password }}"
+        state: "present"
+        validate_certs: False
+        tenant_name: "{{ tenant }}"
+        contract: "{{ item.contract }}"
+        subject: "{{ item.subject }}"
+        filter: "{{ item.filter }}"
+      with_items:
+        - contract: "web"
+          subject: "https"
+          filter: "https"
+        - contract: "sql"
+          subject: "sql"
+          filter: "sql"
+
+    - name: ENSURE APPLICATION EXISTS
+      aci_ap:
+        host: "{{ inventory_hostname }}"
+        username: "{{ username }}"
+        password: "{{ password }}"
+        state: "present"
+        validate_certs: false
+        tenant: "{{ tenant }}"
+        ap: "{{ ap }}"
+        descr: "App Profile Created Using Ansible"
+
+    - name: ENSURE APPLICATION EPGS EXISTS
+      aci_epg:
+        host: "{{ inventory_hostname }}"
+        username: "{{ username }}"
+        password: "{{ password }}"
+        state: "present"
+        validate_certs: False
+        tenant: "{{ tenant }}"
+        ap: "{{ ap }}"
+        epg: "{{ item.epg }}"
+        bd: "prod_bd"
+        description: "EPG Created Using Ansible"
+      with_items: "{{ epgs }}"
+
+
+    - name: ENSURE DOMAIN IS BOUND TO EPG
+      aci_epg_to_domain:
+        host: "{{ inventory_hostname }}"
+        username: "{{ username }}"
+        password: "{{ password }}"
+        state: "present"
+        validate_certs: false
+        tenant: "{{ tenant }}"
+        ap: "{{ ap }}"
+        epg: "{{ item.epg }}"
+        domain: "aci_ansible_lab"
+        domain_type: "vmm"
+        vm_provider: "vmware"
+        encap_mode: "auto"
+        encap: "{{ item.encap }}"
+      with_items: "{{ epgs }}"
+
+    - name: ENSURE EPG IS ASSOCIATED TO CONTRACTS
+      aci_epg_to_contract:
+        host: "{{ inventory_hostname }}"
+        username: "{{ username }}"
+        password: "{{ password }}"
+        state: "present"
+        validate_certs: False
+        tenant: "{{ tenant }}"
+        ap: "{{ ap }}"
+        epg: "{{ item.epg }}"
+        contract: "{{ item.contract }}"
+        contract_type: "{{ item.contract_type }}"
+      with_items: "{{ epg_contracts }}"

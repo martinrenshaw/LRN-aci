@@ -1,4 +1,29 @@
 ---
+tenant: Silver
+ap: "intranet"
+epgs:
+  - epg: "web"
+    encap: "21"
+    contract_type: "both"
+    consumer: "sql"
+    provider: "web"
+  - epg: "sql"
+    encap: "22"
+    contract_type: "provider"
+    provider: "sql"
+epg_contracts:
+  - epg: "web"
+    contract: "web"
+    contract_type: "provider"
+  - epg: "web"
+    contract: "sql"
+    contract_type: "consumer"
+  - epg: "sql"
+    contract: "sql"
+    contract_type: "provider"
+
+
+
 
 varslist:
   - { tenant: 'MR-TF13DG', vrf: ['MR-TF13DG-vrf'] }
@@ -13,5 +38,19 @@ varslist:
     bd: 'LC-WV12DW-bd'
 
   - tenant: 'GOLD'
-    vrf: [ 'GOLD-vrf-1', 'GOLD-vrf-2' ]
-    bd: ['GOLD-bd-1','GOLD-bd-2','GOLD-bd-3']
+    vrf: ['GOLD-vrf-1']
+    bd: 'GOLD-bd-1'
+  
+  - tenant: 'GOLD'
+    vrf: ['GOLD-vrf-1']
+    bd: 'GOLD-bd-1'
+    vrf: ['GOLD-vrf-2']
+    bd: 'GOLD-bd-2'
+
+varsdict:
+  - tenant1:
+      vrf: 'vrf-1'
+      bd: GOLD-bd-1
+  - tenant2:
+      vrf: 'vrf-2'
+      bd: GOLD-bd-2

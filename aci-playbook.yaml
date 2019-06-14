@@ -1,5 +1,5 @@
 ---
-- name: TOP LEVEL PLAY - CREATE ACI STUFFFFF
+- name: TOP LEVEL PLAY - CREATE ACI STUFF
   hosts: apic
   connection: local
   gather_facts: False
@@ -29,6 +29,7 @@
       loop: "{{ varslist|subelements('vrf') }}"
         
     - name: ENSURE TENANT BRIDGE DOMAIN EXISTS
+      tags: bde
       aci_bd:
         host: "{{ inventory_hostname }}"
         username: "{{ username }}"
@@ -37,7 +38,7 @@
         state: "present"
         tenant: "{{ item.0.tenant }}"
         bd: "{{ item.0.bd | default('prod_bd') }}"
-        vrf: "{{ item.1 }}"
+        #vrf: "{{ item.1 }}"  # I took this out as it was making the play non-idempotant
         description: "BD Created Using Ansible"
       loop: "{{ varslist|subelements('vrf') }}"
 
