@@ -1,0 +1,31 @@
+IPERF3
+
+Server:
+iperf3 -s -f m
+
+Client:
+iperf3 -c [serverip] -f m
+
+iperf3 -c [serverip] -f m -w 500K
+#large window size - send C to S
+
+iperf3 -c [serverip] -f m -w 500K -R
+#large window size - send S to C
+
+iperf3 -c [serverip] -f m -w 500K -d
+#bi-directional test, both directions simultaneously
+
+# --get-server-output
+
+--------------------------------------------------------------------------------
+
+hping3
+
+hping3 -c 100 10.10.10.1 -1 -i u1000
+# icmp 
+
+hping3 -c 100 10.10.10.1 -p 80 -S -i u1000
+# tcp
+
+hping3 -c 10000 10.10.10.1 -p 22 -S -i u100
+# tcp fast
